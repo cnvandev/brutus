@@ -1,8 +1,9 @@
+import fileinput
 import re
 import sys
 
-''' Cyclically deciphers the given text using a basic shift cipher. Makes no assumptions as to whether it's the real shift. '''
 def decipher(text, shift):
+  ''' Cyclically deciphers the given text using a basic shift cipher. Makes no assumptions as to whether it's the real shift. '''
   string = ""
   for letter in text:
     # Ignore case for the translation, we'll put it back in at the end.
@@ -27,13 +28,13 @@ def decipher(text, shift):
   return string
 
 
-''' Finds the shift that gives the highest number of dictionary words from the supplied list based on the cipher text given. '''
 def find_shift(dict_words, text):
+  ''' Finds the shift that gives the highest number of dictionary words from the supplied list based on the cipher text given. '''
   # Try deciphering the raw text with every letter of the alphabet.
   shift = 0
   word_total = 0
   for test_shift in range(0, 26):
-    deciphered_text = decipher(cipher_text, test_shift)
+    deciphered_text = decipher(text, test_shift)
     deciphered_words = re.split("\W+", deciphered_text)
 
     # See how many words we get - this can probably be inlined somehow.
@@ -45,13 +46,12 @@ def find_shift(dict_words, text):
     if test_word_total > word_total:
       shift = test_shift
       word_total = test_word_total
-      print "New probable shift: \"%d\" with %d dictionary words in interpretation." % (shift, word_total)
 
-  return shift
+  return (shift, word_total)
 
 
-''' Builds a dictionary list of words from the word file indicated. '''
 def init_dictionary(word_file):
+  ''' Builds a dictionary list of words from the word file indicated. '''
   dict_words = []
   for x in open(word_file):
     dict_words.append(x.lower().strip())
@@ -63,19 +63,13 @@ if __name__=="__main__":
   # We'll determine the shift by figuring out which decoding of the message gives us the longest list of English dictionary words.
   dict_words = init_dictionary("/usr/share/dict/words")
 
-  if len(sys.argv) < 2:
-      print "Must be given a filename with the code text!"
-      exit(1)
-
-  with open(sys.argv[1]) as f:
-    cipher_text = ""
-
-    # Loop through the bytes of the message, if we reach the end of the file then break.
-    while True:
-      c = f.read(1)
-      if not c:
-        break #EOF!
-      cipher_text += c
-
-    shift = find_shift(dict_words, cipher_text)
-    print "Most proble interpretation:\n=========================================================\n\n", decipher(cipher_text, shift)
+  # Loop through the bytes of the message, if we reach the end of the file then break.
+  print "Most proble interpretation:"
+  print "========================================================="
+  total_words = 0
+  for cipher_line in fileinput.input():
+    (shift, line_words) = find_shift(dict_words, cipher_line)
+    final_text = decipher(cipher_line, shift)
+    total_words += line_words
+    print final_text
+  print "\n(%d total matching words)" % total_words
