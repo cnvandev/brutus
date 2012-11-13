@@ -52,9 +52,9 @@ def find_shift(dict_words, text):
 
 def init_dictionary(word_file):
   ''' Builds a dictionary list of words from the word file indicated. '''
-  dict_words = []
+  dict_words = set()
   for x in open(word_file):
-    dict_words.append(x.lower().strip())
+    dict_words.add(x.lower().strip())
   return dict_words
 
 
